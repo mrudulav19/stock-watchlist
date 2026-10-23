@@ -59,6 +59,55 @@ app.post("/api/stocks", async (req, res) => {
   }
 });
 
+app.put("/api/stocks/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { companyName, price } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        message: "Invalid stock ID."
+      });
+    }
+
+    if (
+      typeof companyName !== "string" ||
+      !companyName.trim() ||
+      !Number.isFinite(price) ||
+      price <= 0
+    ) {
+      return res.status(400).json({
+        message: "Enter a valid company name and positive price."
+      });
+    }
+
+    const updatedStock = await Stock.findByIdAndUpdate(
+      id,
+      {
+        companyName: companyName.trim(),
+        price
+      },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!updatedStock) {
+      return res.status(404).json({
+        message: "Stock not found."
+      });
+    }
+
+    res.json(updatedStock);
+  } catch (error) {
+    console.error("Update stock error:", error);
+    res.status(500).json({
+      message: "Failed to update stock."
+    });
+  }
+});
+
 // DELETE: remove a stock from MongoDB
 app.delete("/api/stocks/:id", async (req, res) => {
   try {
